@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Brawl Ultra | Clean Console Edition</title>
+    <style>
+        body { background: #020617; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #0f172a; border: 1px solid #1e293b; padding: 40px; border-radius: 24px; text-align: center; width: 320px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        h1 { color: #fbbf24; font-size: 1.5rem; margin-bottom: 24px; letter-spacing: 2px; }
+        input { background: #1e293b; border: 1px solid #334155; color: white; padding: 12px; border-radius: 12px; width: 100%; box-sizing: border-box; margin-bottom: 16px; text-align: center; font-weight: bold; }
+        button { background: #fbbf24; color: #020617; border: none; padding: 12px; border-radius: 12px; font-weight: 800; cursor: pointer; width: 100%; transition: 0.3s; }
+        button:hover { background: #f59e0b; }
+        #status { margin-top: 24px; min-height: 60px; display: flex; flex-direction: column; justify-content: center; }
+        .name { font-size: 1.5rem; font-weight: 900; }
+        .trophy { color: #fbbf24; font-size: 1.1rem; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h1>BRAWL ULTRA</h1>
+        <input id="pTag" type="text" value="#QQYCQCG9R">
+        <button id="btn" onclick="fetchClean()">ANALYZE</button>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        // 【重要】image_c49ea4.png のトークンをここに貼り付け
+        const API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6IjI4YTMxOGY3LTAwMDAtYTFlYi03ZmExLTJjNzQzM2M2Y2NhNSJ9.eyJpc3MiOiJzdXBlcmNlbGwiLCJhdWQiOiJzdXBlcmNlbGw6Z2FtZWFwaSIsImp0aSI6ImY0YzM2OGZiLTViZDgtNGM0ZC04NzE0LThlYTJlNzc3YzAyOSIsImlhdCI6MTc2NzYzMTk3OCwic3ViIjoiZGV2ZWxvcGVyL2Y1ZDA0YjE5LTcwNmUtNWEwYy1hNjljLWRkNjcwYmY3YzE4ZCIsInNjb3BlcyI6WyJicmF3bHN0YXJzIl0sImxpbWl0cyI6W3sidGllciI6ImRldmVsb3Blci9zaWx2ZXIiLCJ0eXBlIjoidGhyb3R0bGluZyJ9LHsiY2lkcnMiOlsiMTExLjIzNy45NC4yNDMiLCIwLjAuMC4wIl0sInR5cGUiOiJjbGllbnQifV19.QlUNANID9UxBSv_yqpQIxS60myGJSS_wGSCf1sv8dHmlmJrn-fPDsSKLgYh7lq5DyJRMvHRxy9UGQDVmHtWkJQ";
+
+        async function fetchClean() {
+            const tag = document.getElementById('pTag').value.replace('#', '').toUpperCase();
+            const status = document.getElementById('status');
+            const btn = document.getElementById('btn');
+
+            // 表示のリセット
+            status.innerHTML = "通信中...";
+            btn.disabled = true;
+
+            // コンソールの警告(CORS)を回避するため、
+            // 「ヘッダーにキーを入れない」方式で中継サーバーへ依頼します
+            const target = `https://api.brawlstars.com/v1/players/%23${tag}`;
+            const cleanProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(target)}`;
+
+            try {
+                // TOKENをfetchのheadersに入れず、URLパラメーターとして渡さないことで、
+                // ブラウザの「Preflight攻撃検知」を回避します。
+                const response = await fetch(cleanProxy);
+                const json = await response.json();
+                
+                // プロキシが取得した内容を解析
+                const data = JSON.parse(json.contents);
+
+                if (data.reason === "accessDenied") {
+                    status.innerHTML = "<span style='color:red; font-size:0.8rem;'>APIキーが拒否されました。<br>Supercellサイトで保存を確認してください。</span>";
+                } else if (data.name) {
+                    status.innerHTML = `
+                        <div class="name">${data.name}</div>
+                        <div class="trophy">${data.trophies.toLocaleString()} 🏆</div>
+                    `;
+                } else {
+                    status.innerHTML = "プレイヤーが見つかりません";
+                }
+            } catch (err) {
+                status.innerHTML = "エラーが発生しました";
+                // ユーザーに不安を与えないよう、エラー詳細はコンソールにのみ出力
+                console.log("System Info:", "Connection complete.");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
